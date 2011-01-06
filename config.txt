@@ -1,0 +1,4 @@
+[Agent]
+database: db.sqlite
+wake_every: 2
+stop_words: resources/stopwords.txt
