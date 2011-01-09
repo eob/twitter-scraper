@@ -111,9 +111,109 @@ class Database:
         cur.execute(self.events_schema())
         cur.execute(self.queries_schema())
         cur.execute(self.tasks_schema())
+        cur.execute(self.people_schema())
+        cur.execute(self.at_mentions_schema())
+        cur.execute(self.tweets_schema())
+        cur.execute(self.places_schema())
+        cur.execute(self.container_schema())
+        cur.execute(self.tweet_place_schema())
+        cur.execute(self.social_graph())
+        
         cur.close()
         self.db.commit()
+    
+    def tweets_schema(self):
+        return """
+        CREATE TABLE IF NOT EXISTS tweets (
+            tid integer PRIMARY KEY AUTO_INCREMENT,
+            pid            integer,
+            qid            integer,
+            twitter_id      bigint,
+            queried_at     datetime,
+            tweet          varchar(255),
+            retweet_of     integer default 0,
+            reply_of       integer default 0,
+            created_at     datetime,
+            language      varchar(5),
+            geo_lat     double,
+            geo_lng     double,
+            geo_type    varchar(100),
+            geo_id      varchar(100),
+            geo_name    varchar(200),
+            estimated_loc varchar(200),
+            source varchar(255)
+        );
+        """        
+
+    def at_mentions_schema(self):
+        return """
+        CREATE TABLE IF NOT EXISTS at_mentions (
+            tid integer,
+            pid integer
+        );
+        """
+
+    def people_schema(self):
+        return """
+        CREATE TABLE IF NOT EXISTS people (
+            pid integer PRIMARY KEY AUTO_INCREMENT,
+            twitter_id integer,
+            twitter_name varchar(255),
+            user_location varchar(255)
+        );
+        """
+
+    def tweet_place_schema(self):
+        return """
+        CREATE TABLE IF NOT EXISTS tweets_places (
+            tid integer,
+            pid integer
+        );
+        """
         
+    # Note: created_at is UTC
+    def places_schema(self):
+        return """
+        CREATE TABLE IF NOT EXISTS places (
+            pid integer PRIMARY KEY AUTO_INCREMENT,
+            name          varchar(255),
+            twitter_id    varchar(255),
+            country       varchar(255),
+            country_code  varchar(5),
+            place_type    varchar(255),
+            url           varchar(255),
+            full_name     varchar(255),
+            geo_shape     varchar(255),
+            geo_lat       double,
+            geo_lng       double,
+            geo_box_1_lat double,
+            geo_box_2_lat double,
+            geo_box_3_lat double,
+            geo_box_4_lat double,
+            geo_box_1_lng double,
+            geo_box_2_lng double,
+            geo_box_3_lng double,
+            geo_box_4_lng double
+        );
+        """
+
+    def container_schema(self):
+        return """
+        CREATE TABLE IF NOT EXISTS spatial_relationships (
+            container integer,
+            contained integer
+        );
+        """
+
+    def social_graph(self):
+        return """
+        CREATE TABLE IF NOT EXISTS graph (
+            follower integer,
+            followed integer,
+            edge     integer default 0
+        );
+        """
+
     def events_schema(self):
         return """
         CREATE TABLE IF NOT EXISTS events (

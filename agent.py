@@ -89,8 +89,6 @@ class Agent:
         if not gotit:
             print "Unknown Task"
             print task
-
-
     
 def main():
     agent = Agent("config.txt")

@@ -2,7 +2,7 @@ from scrapers import new_york
 import datetime
 
 class Task:
-    taskName = "No-Op"
+    taskName = "NoOp"
 
     def __init__(self, agent):
         self.agent = agent
@@ -45,7 +45,7 @@ class Task:
     
     
 class ScrapeNycTask(Task):
-    taskName = "Scrape nyc.com"
+    taskName = "ScrapeNyc"
     
     def __init__(self, db, delta):
         """
@@ -67,7 +67,7 @@ class ScrapeNycTask(Task):
                 self.db.safe_insert('events', event)
 
 class CreateQueriesFromEventsTask(Task):
-    taskName = "Events to Queries"
+    taskName = "EventsToQueries"
     
     def __init__(self, db, delta):
         """
@@ -84,7 +84,7 @@ class CreateQueriesFromEventsTask(Task):
         self.tid = 0
 
     def execute(self):
-        print "Creating event queries"
+        print "CreateEventQueries"
         sql = 'select eid,title,venue,source,event_time from events where (select count(*) from queries where queries.eid=events.eid)=0 and events.ticket_price > 10 and length(events.title) < 40;'
         cur = self.db.query(sql)
         for row in cur:
@@ -114,7 +114,7 @@ class CreateQueriesFromEventsTask(Task):
         cur.close()
 
 class SaveTweetsTask(Task):
-    taskName = "Save Tweets"
+    taskName = "SaveTweets"
     
     def __init__(self, db, delta):
         super(SaveTweetsTask,self).__init__(db)
@@ -129,3 +129,5 @@ class SaveTweetsTask(Task):
         print "[%s] Saving %d Tweets" % (str(datetime.datetime.now()), len(tweets))
         for tweet in tweets:
             print tweet
+
+TaskTypes = [Task]
