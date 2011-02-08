@@ -11,8 +11,8 @@ class Agent:
     def __init__(self, config_file):
         config = ConfigParser.ConfigParser()
         config.readfp(open('config.txt'))
-        self.db = None
         self.db_name = config.get("Agent", "database")
+        self.db = database.Database(self.db_name) 
         self.wake_interval = int(config.get("Agent", "wake_every"))
         self.stopwords = open(config.get("Agent", "stop_words"), 'r').read().split()
         self.local_timezone = pytz.timezone ("America/New_York")

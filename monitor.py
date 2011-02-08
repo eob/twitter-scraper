@@ -1,13 +1,28 @@
-
-
+from optparse import OptionParser
+import ConfigParser
+from agent import Agent
+from tasks import tasks
+from database import database
 
 class Monitor:
-    def __init__(self):
+    def __init__(self, configFile):
         config = ConfigParser.ConfigParser()
-        config.readfp(open('config.txt'))
-        self.agent = Agent('config.txt')
+        config.readfp(open(configFile))
+        self.agent = Agent(configFile)
     
-    def add_task(self, name, repeat):
+    def list_tasks(self):
+        print "============================================================================"
+        print "| TASKS                                                                    |"
+        print "============================================================================"
+        sql = "SELECT tid,task,after,reschedule,delta FROM tasks WHERE complete=0 ORDER BY after;"
+        result = self.agent.db.query(sql)
+        print '| {0:3} | {1:10} | {2:29} | {3:12} | {4:6} |'.format("TID", "Task", "After", "Reschedule?", "Delta")
+        print "----------------------------------------------------------------------------"
+        for row in result:
+            print '| {0:3} | {1:10} | {2:29} | {3:12d} | {4:6} |'.format(row[0], row[1], row[2], row[3], row[4])
+        print "----------------------------------------------------------------------------"
+    
+    def add_task(self, name, repeat, delta):
         theTask = None
         for tt in tasks.TaskTypes:
             if (tt.taskName == name):
@@ -15,9 +30,10 @@ class Monitor:
         
         if theTask == None:
             print "Error -- didn't know what task to do"
+            print "Valid task types are: " + ", ".join(map(lambda x : x.taskName, tasks.TaskTypes))
         else:
             if (repeat == 0):
-                theTask.repeats = False
+              theTask.repeats = False
             else:
                 theTask.repeats = True
                 theTask.delta = repeat
@@ -27,7 +43,21 @@ def main():
     monitor = Monitor("config.txt")
     # task = tasks.Task(agent.db)
     # task.schedule(False)
-    monitor.add_task("NoOp", 0)
+    parser = OptionParser()
+    parser.add_option("-t", "--tasks", dest="tasks", help="peroform a TASK action", metavar="TASK")
+    (options, args) = parser.parse_args()
+    print "Options " + str(options)
+    print "Args " + str(args)
+    print ""
+    if options.tasks:
+        if options.tasks == "list":
+            monitor.list_tasks()
+        elif options.tasks == "add":
+            if len(args) < 3:
+                print "Usage: --add task repeat? delta"
+                print "Valid task types are: " + ", ".join(map(lambda x : x.taskName, tasks.TaskTypes))
+            else:
+              monitor.add_task(args[0], int(args[1]), int(args[2])) 
 
 if __name__ == "__main__":
-    main()
+   main()

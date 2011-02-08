@@ -121,11 +121,33 @@ class Database:
         
         cur.close()
         self.db.commit()
-    
-    def tweets_schema(self):
+     
+
+		def lastTweetFrom(self, user_id):
+			  sql = """
+				  SELECT tid FROM tweets, people
+					 WHERE tweets.pid = people.pid
+					   AND people.twitter_name = ?
+				ORDER BY tid DESC
+				   LIMIT 1;
+					 """
+        result = self.query(sql, [user_id])
+        if len(result) == 0:
+				   return 0
+				else:
+					 row = result.fetch_one()
+					 return row[0]
+		
+    def save_tweet(self):
+			  pass
+	
+    def tweetsFromUserSince(self, user, since):
+			  pass
+
+		def tweets_schema(self):
         return """
         CREATE TABLE IF NOT EXISTS tweets (
-            tid integer PRIMARY KEY AUTO_INCREMENT,
+            tid integer PRIMARY KEY AUTOINCREMENT,
             pid            integer,
             qid            integer,
             twitter_id      bigint,
@@ -156,7 +178,7 @@ class Database:
     def people_schema(self):
         return """
         CREATE TABLE IF NOT EXISTS people (
-            pid integer PRIMARY KEY AUTO_INCREMENT,
+            pid integer PRIMARY KEY AUTOINCREMENT,
             twitter_id integer,
             twitter_name varchar(255),
             user_location varchar(255)
@@ -175,7 +197,7 @@ class Database:
     def places_schema(self):
         return """
         CREATE TABLE IF NOT EXISTS places (
-            pid integer PRIMARY KEY AUTO_INCREMENT,
+            pid integer PRIMARY KEY AUTOINCREMENT,
             name          varchar(255),
             twitter_id    varchar(255),
             country       varchar(255),

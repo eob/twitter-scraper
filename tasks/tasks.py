@@ -113,6 +113,30 @@ class CreateQueriesFromEventsTask(Task):
 
         cur.close()
 
+class PullUserTweetsTask(Task):
+	  taskName = "PullUserTweets"
+
+		def __init__(self, db, user):
+			  super(PullUserTweetsTask, self).__init__(db)
+				self.name = PullUserTweetsTask.taskName
+				self.user = user
+    
+ 
+    def lastKnownTweet(self):
+		    sql = "SELECT twitter_id FROM tweets WHERE user_id = ? ORDER BY twitter_id DESC LIMIT 1"
+
+		def execute(self):
+        # Pull down all the tweets after lastKnownTweet			  
+        tweets = getNewTwets()
+				saveTweets(tweets)
+	  
+		def getNewTweets(self):
+			  lastTime = lastKnownTweet()
+         
+	
+		def saveTweets(self):
+        pass
+
 class SaveTweetsTask(Task):
     taskName = "SaveTweets"
     
