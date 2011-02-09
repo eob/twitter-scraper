@@ -2,3 +2,11 @@
 database: db.sqlite
 wake_every: 2
 stop_words: resources/stopwords.txt
+
+[Stream]
+username: foo
+password: foo
+
+[FilterStream]
+username: foo
+password: foo

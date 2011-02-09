@@ -2,67 +2,97 @@ Twitter Scraper
 ===============
 
 This is a light-weight agent-based framework to help you schedule a workflow of
-scraping tasks.
+scraping tasks, mainly focused on Twitter.
 
 Running
 ------- 
 
-First, run the agent:
-    
-    python agent.py
+- Fill in **config.txt** with your own values.
+- Next run the agent:
+
+	python agent.py
 
 This agent runs in the backround and does things based on the tasks that are 
-assigned to it. You can schedule tasks using another commandline tool.
+assigned to it. You can schedule tasks using another command line took, `monitor.py`.
 
-    python monitor.py tasks list
-    python monitor.py task delete 1
-    python monitor.py tasks add <TaskName> <Repeat> <Delta>
+Recipes (Quick Start)
+----------------------
 
-For adding a task, `<Repeat>` is either 0 or 1, and `<Delta>` is the time
-between repititions. Set it to 0 if `<Repeat>` is also 0.
+To sample from the twitter stream
 
-Bundled Tasks
+	python monitor.py --tasks add StartStream 0 0
+	
+To pull down tasks for a `@edwardbenson`
+	
+	python monitor.py --tasks add ScrapeUser 0 0 @edwardbenson
+
+To pull down tasks for a `@edwardbenson`, refreshing every day
+
+	python monitor.py --tasks add ScrapeUser 1 86400 @edwardbenson
+
+To sample from the stream for tweets that match the query `"Red Sox" Redsox`
+
+	python monitor.py --tasks add StartFilterStream "Red Sox" Redsox
+	
+To sample from the stream, and every hour pull down the last 20 tweets from 10 random users
+
+	python monitor.py --tasks add StartStream 0 0
+	python monitor.py --tasks add PullRandomUsers 1 3600 10 20
+
+Tasks
 -------------
 
-A number of tasks come prepackaged with the library.
+### Basic Task Operations
 
-- **ScrapeUser** scrapes the history of a single user
-- **ScrapeNyc** scrapes events from NYC.com
-- **ScrapeTerms** subscripts to the feed for a set of terms
+**To add a task**:
+	
+	python monitor.py --tasks add <TaskName> <Repeat> <Delta>
 
-Operation of each of these is detailed below.
+For adding a task, `<Repeat>` is either 0 or 1, and `<Delta>` is the time
+between repetitions. Set it to 0 if `<Repeat>` is also 0.
+
+**To list tasks**:
+
+	python monitor.py --tasks list
 
 ### ScrapeUser
 
-To add:
-    python monitor.py tasks add ScrapeUser <repeat> <delta> <username>
+Pulls tweets from the provided user, such as `@edwardbenson`
 
-The username is the user's twitter handle, such as `@edwardbenson`
+	python monitor.py --tasks add ScrapeUser <repeat> <delta> <username>
 
-### ScrapeNyc
+### StartStream
 
-To add:
+Starts pulling form the twitter stream
     
-    python monitor.py tasks add ScrapeNyc <repeat> <delta>
+    python monitor.py --tasks add StartStream 0 0
 
+### StopStream
 
-### ScrapeTerms
+Stops pulling form the twitter stream
 
-The ScrapeTerms task is different than the others. This task stays 
-running all the time and you can add and remove to the terms being 
-scraped from the command line. Therefore it gets special handling.
-(This is a useful utility first, a totally generalized one second)
+    python monitor.py --tasks add StopStream 0 0
 
-    python monitor.py terms add <term1> <term2> .. <termN>
-    python monitor.py terms remove <term1> <term2> .. <termN>
-    python monitor.py terms list
+### StartFilterStream
 
-Each of these terms will constitute a different search of the feed.
-If you want the term to be multi-word, use a space.
+Starts pulling form the filtered twitter stream with the provided args
+
+    python monitor.py --tasks add StartFilterStream 0 0 <arg1> .. <argN>
+
+### StopFilterStream
+
+Stops pulling form the filtered twitter stream
+
+    python monitor.py --tasks add StartFilterStream 0 0 
+
+### PullRandomUsers
+
+Queries for N random users in the database with only 1 tweet recorded in the DB 
+and pulls their latest M tweets.
+
+    python monitor.py --tasks add PullRandomUsers 0 0 <N> <M> 
 
 Custom Tasks
 -------------
 
-Implementing your own tasks is easy. Just dig around in the code to see how.
-
-
+Implementing your own tasks is easy. Just dig around in the `tasks/tasks.py` file to see examples.

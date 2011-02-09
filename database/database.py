@@ -123,28 +123,28 @@ class Database:
         self.db.commit()
      
 
-		def lastTweetFrom(self, user_id):
-			  sql = """
-				  SELECT tid FROM tweets, people
-					 WHERE tweets.pid = people.pid
-					   AND people.twitter_name = ?
-				ORDER BY tid DESC
-				   LIMIT 1;
-					 """
+    def lastTweetFrom(self, user_id):
+        sql = """
+              SELECT tid FROM tweets, people
+                 WHERE tweets.pid = people.pid
+                   AND people.twitter_name = ?
+            ORDER BY tid DESC
+               LIMIT 1;
+                 """
         result = self.query(sql, [user_id])
         if len(result) == 0:
-				   return 0
-				else:
-					 row = result.fetch_one()
-					 return row[0]
-		
+            return 0
+        else:
+            row = result.fetch_one()
+            return row[0]
+        
     def save_tweet(self):
-			  pass
-	
+              pass
+    
     def tweetsFromUserSince(self, user, since):
-			  pass
+              pass
 
-		def tweets_schema(self):
+    def tweets_schema(self):
         return """
         CREATE TABLE IF NOT EXISTS tweets (
             tid integer PRIMARY KEY AUTOINCREMENT,
@@ -272,6 +272,7 @@ class Database:
             reschedule    integer default 0,
             complete      integer default 0,
             completed_on  datetime,
+            args,         text,
             delta         integer
         );
         """

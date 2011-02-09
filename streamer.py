@@ -3,9 +3,9 @@ import json
 import sys
 
 class Streamer(object):
-    def __init__(self, qid, robot, username, password, api=None):
+    def __init__(self, qid, agent, username, password, api=None):
         self.api = api or tweepy.API()
-        self.robot = robot
+        self.agent = agent
         self.qid = qid
         self.filter = []
         self.stream = tweepy.Stream(username, password, self)
@@ -45,9 +45,10 @@ class Streamer(object):
             print "Unexpected error:", sys.exc_info()[0]
             print ex
             print ex.args
+            
     def on_status(self, status):
         """Called when a new status arrives"""
-        self.robot.receive_tweet(status)
+        self.agent.receive_tweet(status)
         return
 
     def on_delete(self, status_id, user_id):

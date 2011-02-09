@@ -1,11 +1,14 @@
 from scrapers import new_york
 import datetime
+import pickle
+import base64
 
 class Task:
     taskName = "NoOp"
 
-    def __init__(self, agent):
+    def __init__(self, agent, args):
         self.agent = agent
+        self.args = args
         self.name = Task.taskName
         self.reschedules = False
         self.delta = 0
@@ -13,12 +16,12 @@ class Task:
         self.db = self.agent.db
         
     def schedule(self, add_delta = True):
-        sql = "INSERT INTO tasks (task, after, reschedule, delta) VALUES (?,?,?,?);"
+        sql = "INSERT INTO tasks (task, after, reschedule, delta, args) VALUES (?,?,?,?,?);"
         if add_delta:            
             thedate = datetime.datetime.now() + datetime.timedelta(seconds=self.delta)
         else:
             thedate = datetime.datetime.now()
-        params = [self.name, thedate, self.reschedules, self.delta]
+        params = [self.name, thedate, self.reschedules, self.delta, base64.b64encode(pickle.dumps(self.args))]
         cur = self.db.query(sql, params)
         cur.close()
         self.db.commit()
@@ -47,12 +50,12 @@ class Task:
 class ScrapeNycTask(Task):
     taskName = "ScrapeNyc"
     
-    def __init__(self, db, delta):
+    def __init__(self, agent, args):
         """
         Scrape the NYC.com events table and
         load new events for the coming 7 days into the database
         """
-        super(ScrapeNycTask,self).__init__(db)
+        super(ScrapeNycTask,self).__init__(agent, args)
         self.name = ScrapeNycTask.taskName
         self.reschedules = True
         self.delta = delta
@@ -69,7 +72,7 @@ class ScrapeNycTask(Task):
 class CreateQueriesFromEventsTask(Task):
     taskName = "EventsToQueries"
     
-    def __init__(self, db, delta):
+    def __init__(self, agent, args):
         """
         Find events with:
           * ticket price > $10
@@ -77,7 +80,7 @@ class CreateQueriesFromEventsTask(Task):
           * no query records in the database
         and create query records for them
         """
-        super(CreateQueriesFromEventsTask,self).__init__(db)
+        super(CreateQueriesFromEventsTask,self).__init__(agent, args)
         self.name = CreateQueriesFromEventsTask.taskName
         self.reschedules = True
         self.delta = delta
@@ -113,45 +116,129 @@ class CreateQueriesFromEventsTask(Task):
 
         cur.close()
 
-class PullUserTweetsTask(Task):
-	  taskName = "PullUserTweets"
+class ScrapeUserTask(Task):
+    taskName = "ScrapeUser"
 
-		def __init__(self, db, user):
-			  super(PullUserTweetsTask, self).__init__(db)
-				self.name = PullUserTweetsTask.taskName
-				self.user = user
-    
- 
-    def lastKnownTweet(self):
-		    sql = "SELECT twitter_id FROM tweets WHERE user_id = ? ORDER BY twitter_id DESC LIMIT 1"
-
-		def execute(self):
-        # Pull down all the tweets after lastKnownTweet			  
+    def __init__(self, agent, args):
+        super(ScrapeUserTask, self).__init__(agent, args)
+        self.name = ScrapeUserTask.taskName
+        self.user = self.args[0]
+        
+        # For keeping track of pulling in others in the social network
+        # self.radius = 0
+        # if len(self.args) > 1:
+        #     self.radius = int(self.args[1])
+        
+    def execute(self):
+        # Pull down all the tweets after lastKnownTweet              
         tweets = getNewTwets()
-				saveTweets(tweets)
-	  
-		def getNewTweets(self):
-			  lastTime = lastKnownTweet()
+        saveTweets(tweets)
+  
+    def getNewTweets(self):
+        lastTime = self.db.lastTweetFrom(self.user)
+        if lastTime == 0:
+            tweets = [] # get all tweets
+        else:
+            tweets = [] # get tweets since last
+        self.saveTweets(tweets)
          
-	
-		def saveTweets(self):
+    def saveTweets(self, tweets):
         pass
+
+class StartStreamTask(Task):
+    taskName = "StartStream"
+
+    def __init__(self, agent, args):
+        super(StartStreamTask,self).__init__(agent, args)
+        self.name = StartStreamTask.taskName
+        self.reschedules = False
+        self.delta = delta
+        self.tid = 0
+
+    def execute(self):
+        self.agent.streamSampler.start()
+
+class StopStreamTask(Task):
+    taskName = "StopStream"
+
+    def __init__(self, agent, args):
+        super(StopStreamTask,self).__init__(agent, args)
+        self.name = StopStreamTask.taskName
+        self.reschedules = False
+        self.delta = delta
+        self.tid = 0
+
+    def execute(self):
+        self.agent.streamSampler.stop()
+
+class StartFilterStreamTask(Task):
+    taskName = "StartFilterStream"
+
+    def __init__(self, agent, args):
+        super(StartFilterStreamTask,self).__init__(agent, args)
+        self.name = StartFilterStreamTask.taskName
+        self.reschedules = False
+        self.delta = delta
+        self.tid = 0
+
+    def execute(self):
+        self.agent.filterSampler.start(self.args)
+
+class StopFilterStreamTask(Task):
+    taskName = "StopFilterStream"
+
+    def __init__(self, agent, args):
+        super(StopFilterStreamTask,self).__init__(agent, args)
+        self.name = StopFilterStreamTask.taskName
+        self.reschedules = False
+        self.delta = delta
+        self.tid = 0
+
+    def execute(self):
+        self.agent.filterSampler.stop()
 
 class SaveTweetsTask(Task):
     taskName = "SaveTweets"
     
-    def __init__(self, db, delta):
-        super(SaveTweetsTask,self).__init__(db)
+    def __init__(self, agent, args):
+        super(SaveTweetsTask,self).__init__(agent, args)
         self.name = SaveTweetsTask.taskName
         self.reschedules = True
         self.delta = delta
         self.tid = 0
 
     def execute(self):
-        tweets = self.agent.fetch("tweets")
-        agent.destroy("tweets")
-        print "[%s] Saving %d Tweets" % (str(datetime.datetime.now()), len(tweets))
-        for tweet in tweets:
-            print tweet
+        self.agent.save_tweets()
 
-TaskTypes = [Task]
+class PullRandomUsersTask(Task):
+    taskName = "PullRandomUsers"
+
+    def __init__(self, agent, args):
+        super(PullRandomUsersTask,self).__init__(agent, args)
+        self.name = PullRandomUsersTask.taskName
+        self.reschedules = True
+        self.delta = delta
+        self.num_users = args[0]
+        self.num_tweets = args[1]
+
+    def execute(self):
+        sql = "SELECT twitter_name, count(tid) AS cnt FROM tweets,people WEHRE tweets.pid = people.pid AND cnt = 1 ORDER BY rand() LIMIT %i" % self.num_users
+        res = self.db.query(sql)
+        for row in res:
+            tid = row[0]
+            # Schedule a new task
+            task = ScrapeUserTask(self.agent, [tid, self.num_tweets])
+            task.reschedules = False
+            task.delta = 0
+            task.schedule()
+
+# This defines which tasks the monitor.py script will support.
+TaskTypes = [   Task, 
+                ScrapeUserTask,
+                StartStreamTask,
+                StopStreamTask,
+                StartFilterStreamTask,
+                StopFilterStreamTask,
+                SaveTweetsTask,
+                PullRandomUsersTask
+            ]
