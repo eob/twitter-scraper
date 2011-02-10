@@ -30,14 +30,19 @@ To pull down tasks for a `@edwardbenson`, refreshing every day
 
 	python monitor.py --tasks add ScrapeUser 1 86400 @edwardbenson
 
-To sample from the stream for tweets that match the query `"Red Sox" Redsox`
+To sample from the stream for tweets that match the query `"Red Sox" Redsox` and print these out every 10 seconds
 
 	python monitor.py --tasks add StartFilterStream "Red Sox" Redsox
+    python monitor.py --tasks add DumpTweets 1 10
 	
 To sample from the stream, and every hour pull down the last 20 tweets from 10 random users
 
 	python monitor.py --tasks add StartStream 0 0
 	python monitor.py --tasks add PullRandomUsers 1 3600 10 20
+
+To shutdown the agent:
+    python monitor.py --tasks add Die 0 0
+
 
 Tasks
 -------------

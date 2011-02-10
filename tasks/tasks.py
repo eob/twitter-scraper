@@ -3,7 +3,7 @@ import datetime
 import pickle
 import base64
 
-class Task:
+class Task(object):
     taskName = "NoOp"
 
     def __init__(self, agent, args):
@@ -16,6 +16,7 @@ class Task:
         self.db = self.agent.db
         
     def schedule(self, add_delta = True):
+        print "Scheduling task" 
         sql = "INSERT INTO tasks (task, after, reschedule, delta, args) VALUES (?,?,?,?,?);"
         if add_delta:            
             thedate = datetime.datetime.now() + datetime.timedelta(seconds=self.delta)
@@ -27,18 +28,19 @@ class Task:
         self.db.commit()
 
     def schedule_if_none_exist(self):
+        print "Scheduling task if none exists"
         sql = "SELECT tid FROM tasks WHERE complete = 0 AND task = ?"
         if not self.db.bool_query(sql, (self.name)):
             self.schedule(self.db)
 
     def complete(self, allow_reschedule=True):
-        print "Com"
+        print "Completing task"
         sql = "UPDATE tasks SET complete = ?, completed_on = ? WHERE tid = ?"
-        params = [1, str(datetime.datetime.now), self.tid]
+        params = [1, datetime.datetime.now(), self.tid]
         cur = self.db.query(sql, params)
         cur.close()
         self.db.commit()
-
+        print "Completed"
         # Reschedule
         if allow_reschedule and self.reschedules:
             self.schedule(self.db)
@@ -152,8 +154,6 @@ class StartStreamTask(Task):
         super(StartStreamTask,self).__init__(agent, args)
         self.name = StartStreamTask.taskName
         self.reschedules = False
-        self.delta = delta
-        self.tid = 0
 
     def execute(self):
         self.agent.streamSampler.start()
@@ -165,8 +165,6 @@ class StopStreamTask(Task):
         super(StopStreamTask,self).__init__(agent, args)
         self.name = StopStreamTask.taskName
         self.reschedules = False
-        self.delta = delta
-        self.tid = 0
 
     def execute(self):
         self.agent.streamSampler.stop()
@@ -178,8 +176,6 @@ class StartFilterStreamTask(Task):
         super(StartFilterStreamTask,self).__init__(agent, args)
         self.name = StartFilterStreamTask.taskName
         self.reschedules = False
-        self.delta = delta
-        self.tid = 0
 
     def execute(self):
         self.agent.filterSampler.start(self.args)
@@ -191,8 +187,6 @@ class StopFilterStreamTask(Task):
         super(StopFilterStreamTask,self).__init__(agent, args)
         self.name = StopFilterStreamTask.taskName
         self.reschedules = False
-        self.delta = delta
-        self.tid = 0
 
     def execute(self):
         self.agent.filterSampler.stop()
@@ -204,11 +198,22 @@ class SaveTweetsTask(Task):
         super(SaveTweetsTask,self).__init__(agent, args)
         self.name = SaveTweetsTask.taskName
         self.reschedules = True
-        self.delta = delta
-        self.tid = 0
 
     def execute(self):
         self.agent.save_tweets()
+
+class DumpTweetsTask(Task):
+   taskName = "DumpTweets"
+
+   def __init__(self,agent,args):
+       super(DumpTweetsTask,self).__init__(agent,args)
+       self.name = DumpTweetsTask.taskName
+
+   def execute(self):
+       tweets = self.agent.tweet_cache
+       self.agent.tweet_cache = []
+       for tweet in tweets:
+           print tweet["text"]
 
 class PullRandomUsersTask(Task):
     taskName = "PullRandomUsers"
@@ -217,7 +222,6 @@ class PullRandomUsersTask(Task):
         super(PullRandomUsersTask,self).__init__(agent, args)
         self.name = PullRandomUsersTask.taskName
         self.reschedules = True
-        self.delta = delta
         self.num_users = args[0]
         self.num_tweets = args[1]
 
@@ -232,6 +236,20 @@ class PullRandomUsersTask(Task):
             task.delta = 0
             task.schedule()
 
+
+class DieTask(Task):
+    taskName = "Die"
+
+    def __init__(self,agent,args):
+        super(DieTask,self).__init__(agent, args)
+        self.name = DieTask.taskName
+
+    def execute(self):
+        print "Goodbye, world"
+        self.agent.filterSampler.stop()
+        self.agent.streamSampler.stop()
+        self.agent.expire = True
+        
 # This defines which tasks the monitor.py script will support.
 TaskTypes = [   Task, 
                 ScrapeUserTask,
@@ -240,5 +258,7 @@ TaskTypes = [   Task,
                 StartFilterStreamTask,
                 StopFilterStreamTask,
                 SaveTweetsTask,
-                PullRandomUsersTask
+                PullRandomUsersTask,
+                DumpTweetsTask,
+                DieTask
             ]

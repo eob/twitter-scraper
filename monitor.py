@@ -29,7 +29,7 @@ class Monitor:
         print "----------------------------------------------------------------------------"
     
     def add_task(self, name, repeat, delta, args=[]):
-        print "Adding Task"
+        print "Adding Task: %s (repeat=%i, delta=%i)" % (name,repeat,delta)
         theTask = None
         for tt in tasks.TaskTypes:
             if (tt.taskName == name):
@@ -40,9 +40,9 @@ class Monitor:
             print "Valid task types are: " + ", ".join(map(lambda x : x.taskName, tasks.TaskTypes))
         else:
             if (repeat == 0):
-              theTask.repeats = False
+              theTask.reschedules = False
             else:
-                theTask.repeats = True
+                theTask.reschedules = True
                 theTask.delta = repeat
             theTask.schedule()
 

@@ -5,6 +5,7 @@ import pytz
 import sys
 import threading
 import pickle
+from streamer import Streamer
 import ConfigParser, os
 from tasks import tasks
 import base64
@@ -19,11 +20,12 @@ class Agent:
         self.stopwords = open(config.get("Agent", "stop_words"), 'r').read().split()
         self.local_timezone = pytz.timezone ("America/New_York")
         self.woke_at = self.utc_for(datetime.datetime.now())
-        self.tasks = [tasks.Task]
+        self.tasks = tasks.TaskTypes 
         self.tweet_cache = []
         self.streamSampler = Streamer(0,self,config.get("Stream", "username"),config.get("Stream", "password"))
         self.filterSampler = Streamer(0,self,config.get("FilterStream", "username"),config.get("FilterStream", "password"))
-    
+        self.expire = False
+
     def utc_for(self, dt):
         local_dt = dt.replace (tzinfo = self.local_timezone)
         return local_dt.astimezone(pytz.utc)        
@@ -34,7 +36,8 @@ class Agent:
         try:
             self.woke_at = self.utc_for(datetime.datetime.now())
             self.process_tasks()
-            threading.Timer(self.wake_interval, self.wake).start()
+            if not self.expire: 
+                threading.Timer(self.wake_interval, self.wake).start()
         except Exception as ex:
             print "Unexpected error:", sys.exc_info()[0]
        	    print ex.args
@@ -83,6 +86,7 @@ class Agent:
             if (taskType.taskName == task[1]):
                 gotit = True
                 taskImpl = taskType(self, pickle.loads(base64.b64decode(task[5])))
+                taskImpl.tid = task[0]
                 if task[3] == 1:
                     taskImpl.reschedules = True
                 else:
