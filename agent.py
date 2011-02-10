@@ -9,6 +9,7 @@ from streamer import Streamer
 import ConfigParser, os
 from tasks import tasks
 import base64
+from english import English
 
 class Agent:
     def __init__(self, config_file):
@@ -25,7 +26,8 @@ class Agent:
         self.streamSampler = Streamer(0,self,config.get("Stream", "username"),config.get("Stream", "password"))
         self.filterSampler = Streamer(0,self,config.get("FilterStream", "username"),config.get("FilterStream", "password"))
         self.expire = False
-
+        self.blackboard = {}
+    
     def utc_for(self, dt):
         local_dt = dt.replace (tzinfo = self.local_timezone)
         return local_dt.astimezone(pytz.utc)        
@@ -52,15 +54,12 @@ class Agent:
     ## For tasks to store data in
     ## 
 
-    def stash(key, obj):
-        pass
+    def stash(self, key, obj):
+       self.blackboard[key] = obj    
     
-    def fetch(key):
-        pass
+    def fetch(self, key):
+       return self.blackboard[key] 
     
-    def destroy(key):
-        pass
-        
     ###############################################################
     ## Task Processing
     ## Ideally this would be nicely split out into separate code files

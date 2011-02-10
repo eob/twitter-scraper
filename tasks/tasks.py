@@ -2,7 +2,7 @@ from scrapers import new_york
 import datetime
 import pickle
 import base64
-
+from english import English
 class Task(object):
     taskName = "NoOp"
 
@@ -210,10 +210,17 @@ class DumpTweetsTask(Task):
        self.name = DumpTweetsTask.taskName
 
    def execute(self):
+       if "english" not in self.agent.blackboard:
+           english = English()
+           self.agent.stash("english", english)
+       english = self.agent.fetch("english")
        tweets = self.agent.tweet_cache
        self.agent.tweet_cache = []
        for tweet in tweets:
-           print tweet["text"]
+           # Only dump English tweets. 
+           # XXX - Rest of world: remove this if statement
+           if english.is_english(tweet["text"]):
+               print tweet["text"]
 
 class PullRandomUsersTask(Task):
     taskName = "PullRandomUsers"
