@@ -20,7 +20,7 @@ Recipes (Quick Start)
 
 To sample from the twitter stream
 
-	python monitor.py --tasks add StartStream 0 0
+	python monitor.py --tasks add StartStream 
 	
 To pull down tasks for a `@edwardbenson`
 	
@@ -37,11 +37,11 @@ To sample from the stream for tweets that match the query `"Red Sox" Redsox` and
 	
 To sample from the stream, and every hour pull down the last 20 tweets from 10 random users
 
-	python monitor.py --tasks add StartStream 0 0
+	python monitor.py --tasks add StartStream 
 	python monitor.py --tasks add PullRandomUsers 1 3600 10 20
 
 To shutdown the agent:
-    python monitor.py --tasks add Die 0 0
+    python monitor.py --tasks add Die 
 
 
 Tasks

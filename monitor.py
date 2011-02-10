@@ -60,11 +60,13 @@ def main():
         if options.tasks == "list":
             monitor.list_tasks()
         elif options.tasks == "add":
-            if len(args) < 3:
+            if len(args) < 1:
                 print "Usage: --add task repeat? delta"
                 print "Valid task types are: " + ", ".join(map(lambda x : x.taskName, tasks.TaskTypes))
             else:
-                if (len(args) < 4):
+                if (len(args) == 1):
+                    monitor.add_task(args[0], 0, 0)
+                elif (len(args) < 4):
                     monitor.add_task(args[0], int(args[1]), int(args[2])) 
                 else:
                     monitor.add_task(args[0], int(args[1]), int(args[2]), args[3:]) 
