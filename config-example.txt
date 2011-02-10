@@ -4,9 +4,9 @@ wake_every: 2
 stop_words: resources/stopwords.txt
 
 [Stream]
-username: foobar001
-password: foobar    
+username: foo 
+password: foo    
 
 [FilterStream]
-username: foobar002 
-password: foobar
+username: foo    
+password: foo 
