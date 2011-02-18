@@ -2,7 +2,7 @@ import time, datetime
 import re
 from scrapers import new_york
 import datetime
-import cpickle as pickle
+import cPickle as pickle
 import base64
 from english import English
 import feedparser
@@ -253,7 +253,7 @@ class FileDumperTask(Task):
                 if self.filename != None:
                     fOut = f
                 else:
-                    dateName = "foo"
+                    dateName = "tweets-%i-%i-%i" % (tweet.created_at.year, tweet.created_at.month, tweet.created_at.day)
                     if dateName not in dayFiles:
                         dayFiles[dateName] = open(dateName, "a")
                     fOut = dayFiles[dateName]
@@ -266,7 +266,7 @@ class FileDumperTask(Task):
 
     def write_tweet(self,f,tweet):
         f.write(tweet + "\n")
-m
+
 class PullRandomUsersTask(Task):
     taskName = "PullRandomUsers"
 
