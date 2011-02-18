@@ -2,7 +2,7 @@ import time, datetime
 import re
 from scrapers import new_york
 import datetime
-import pickle
+import cpickle as pickle
 import base64
 from english import English
 import feedparser
@@ -232,7 +232,10 @@ class FileDumperTask(Task):
     def __init__(self,agent,args):
         super(FileDumperTask,self).__init__(agent,args)
         self.name = FileDumperTask.taskName
-        self.filename = args[0]
+        if len(args) > 0:
+            self.filename = args[0]
+        else:
+            self.filename = None
         
     def execute(self):
         if "english" not in self.agent.blackboard:
@@ -241,15 +244,29 @@ class FileDumperTask(Task):
         english = self.agent.fetch("english")
         tweets = self.agent.tweet_cache
         self.agent.tweet_cache = []
-        f = open(self.filename, "a") 
+        if self.filename != None:
+            f = open(self.filename, "a") 
+        dayFiles = {}
+        
         for tweet in tweets:
             if english.is_english(tweet["text"]):
-                self.write_tweet(f,tweet["text"])
-        f.close()
+                if self.filename != None:
+                    fOut = f
+                else:
+                    dateName = "foo"
+                    if dateName not in dayFiles:
+                        dayFiles[dateName] = open(dateName, "a")
+                    fOut = dayFiles[dateName]
+                self.write_tweet(fOut,tweet)
         
+        if self.filename != None:
+            f.close()
+        for ff in dayFiles:
+            ff.close()
+
     def write_tweet(self,f,tweet):
         f.write(tweet + "\n")
-
+m
 class PullRandomUsersTask(Task):
     taskName = "PullRandomUsers"
 
