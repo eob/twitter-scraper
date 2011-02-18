@@ -33,7 +33,6 @@ class Agent:
         return local_dt.astimezone(pytz.utc)        
         
     def wake(self):
-        print "Wake"
         self.db = database.Database(self.db_name)
         try:
             self.woke_at = self.utc_for(datetime.datetime.now())
@@ -86,6 +85,7 @@ class Agent:
                 gotit = True
                 taskImpl = taskType(self, pickle.loads(base64.b64decode(task[5])))
                 taskImpl.tid = task[0]
+                taskImpl.delta = task[4] 
                 if task[3] == 1:
                     taskImpl.reschedules = True
                 else:

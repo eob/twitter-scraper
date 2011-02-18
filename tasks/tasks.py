@@ -1,8 +1,12 @@
+import time, datetime
+import re
 from scrapers import new_york
 import datetime
 import pickle
 import base64
 from english import English
+import feedparser
+
 class Task(object):
     taskName = "NoOp"
 
@@ -222,6 +226,30 @@ class DumpTweetsTask(Task):
            if english.is_english(tweet["text"]):
                print tweet["text"]
 
+class FileDumperTask(Task):
+    taskName = "FileDumper"
+
+    def __init__(self,agent,args):
+        super(FileDumperTask,self).__init__(agent,args)
+        self.name = FileDumperTask.taskName
+        self.filename = args[0]
+        
+    def execute(self):
+        if "english" not in self.agent.blackboard:
+            english = English()
+            self.agent.stash("english",english)
+        english = self.agent.fetch("english")
+        tweets = self.agent.tweet_cache
+        self.agent.tweet_cache = []
+        f = open(self.filename, "a") 
+        for tweet in tweets:
+            if english.is_english(tweet["text"]):
+                self.write_tweet(f,tweet["text"])
+        f.close()
+        
+    def write_tweet(self,f,tweet):
+        f.write(tweet + "\n")
+
 class PullRandomUsersTask(Task):
     taskName = "PullRandomUsers"
 
@@ -243,6 +271,31 @@ class PullRandomUsersTask(Task):
             task.delta = 0
             task.schedule()
 
+class PullFeedTask(Task):
+    taskName = "PullFeed"
+
+    def __init__(self,agent,args):
+        super(PullFeedTask,self).__init__(agent,args)
+        self.name = PullFeedTask.taskName
+        self.reschedules = False
+        self.feed = args[0]
+
+    def execute(self):
+        data = feedparser.parse(self.feed)
+        if 'entries' in data:
+            for entry in data['entries']:
+                self.add_entry(entry) 
+
+    def add_entry(self, entry):
+        vals = {
+                'feed':self.feed,
+                'posted':time.mktime(entry.updated_parsed),
+                'title':entry.title,
+                'link':str(entry.link),
+                'summary':re.sub(r"<[^>]+>", "", entry.summary).strip(),
+                'tags':"\t".join([tag.term for tag in entry.tags])
+        }
+        self.db.safe_insert("feeds",vals)
 
 class DieTask(Task):
     taskName = "Die"
@@ -267,5 +320,7 @@ TaskTypes = [   Task,
                 SaveTweetsTask,
                 PullRandomUsersTask,
                 DumpTweetsTask,
-                DieTask
+                DieTask,
+                FileDumperTask,
+                PullFeedTask
             ]

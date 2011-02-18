@@ -59,6 +59,7 @@ class Database:
                 questions = []
                 for k,v in params.items():
                     fields.append("%s = ?" % k)
+                    values.append(v)
 
                 params = (', '.join(query[1:]), query[0], " AND ".join(fields))
                 sql = "SELECT %s FROM %s WHERE %s;" % params
@@ -82,7 +83,7 @@ class Database:
             for k,v in dic.items():
                 fields.append(k)
                 values.append(v)
-            questions = ['%s' for v in values]
+            questions = ['?' for v in values]
             sql = "INSERT INTO %s (%s) VALUES (%s)" % (table, ', '.join(fields), ', '.join(questions))
             cur = self.db.cursor()
             cur.execute(sql, values)
@@ -118,10 +119,9 @@ class Database:
         cur.execute(self.container_schema())
         cur.execute(self.tweet_place_schema())
         cur.execute(self.social_graph())
-        
+        cur.execute(self.feeds_schema()) 
         cur.close()
         self.db.commit()
-     
 
     def lastTweetFrom(self, user_id):
         sql = """
@@ -192,7 +192,20 @@ class Database:
             pid integer
         );
         """
-        
+       
+    def feeds_schema(self):
+        return """
+        CREATE TABLE IF NOT EXISTS feeds (
+            fid integer,
+            feed varchar(255),
+            posted datetime,
+            title text,
+            link text,
+            summary text,
+            tags text
+        );
+        """
+
     # Note: created_at is UTC
     def places_schema(self):
         return """

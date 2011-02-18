@@ -43,7 +43,7 @@ class Monitor:
               theTask.reschedules = False
             else:
                 theTask.reschedules = True
-                theTask.delta = repeat
+                theTask.delta = delta 
             theTask.schedule()
 
 def main():
