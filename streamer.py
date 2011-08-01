@@ -75,7 +75,10 @@ class Streamer(object):
 if __name__ == "__main__":
     class R:
         def receive_tweet(self, status):
-            print str(status)
+            try:
+                print str(status['text'] + "\n")
+            except: 
+                pass
     r = R()
     s = Streamer(0, r, 'foobar005', 'foobar')
-    s.start(['twitter'])
+    s.start()
